@@ -1,52 +1,50 @@
-import ReactNativeBiometrics, { BiometryTypes } from 'react-native-biometrics';
+import ReactNativeBiometrics from 'react-native-biometrics';
+
 export declare const BiometryTypes1: {
   TouchID: string;
   FaceID: string;
   Biometrics: string;
 };
+
 const BiometricAuthComponent = async (): Promise<any> => {
   const rnBiometrics = new ReactNativeBiometrics({
-    allowDeviceCredentials: true,
+    allowDeviceCredentials: false,
   });
   const biometricType = rnBiometrics
     .isSensorAvailable()
     .then((resultObject) => {
-      const { available, biometryType } = resultObject;
-
-      if (available && biometryType === BiometryTypes.TouchID) {
-        return BiometryTypes.TouchID;
-      } else if (available && biometryType === BiometryTypes.FaceID) {
-        return BiometryTypes.FaceID;
-      } else if (available && biometryType === BiometryTypes.Biometrics) {
-        return BiometryTypes.Biometrics;
-      } else {
-        return 'null';
-      }
+      return resultObject;
     });
   return biometricType;
 };
-export const authenticate = () => {
+
+export const authenticate = (
+  title: string,
+  textButtonCancel: string,
+  fallBackText: string,
+  callBackFuntionSuccess: any,
+  callBackFuntionError: any,
+  allowDeviceCredentialsPin?: boolean
+): Promise<any> => {
   const rnBiometrics = new ReactNativeBiometrics({
-    allowDeviceCredentials: true,
+    allowDeviceCredentials: allowDeviceCredentialsPin,
   });
-  rnBiometrics
+  const authBiometric = rnBiometrics
     .simplePrompt({
-      promptMessage: 'Confirm fingerprint',
-      fallbackPromptMessage: 'messs',
-      cancelButtonText: 'cancel',
+      promptMessage: title,
+      fallbackPromptMessage: fallBackText,
+      cancelButtonText: textButtonCancel,
     })
     .then((resultObject) => {
       const { success } = resultObject;
-
       if (success) {
-        console.log('successful biometrics provided');
-      } else {
-        console.log('user cancelled biometric prompt');
-      }
+        return callBackFuntionSuccess();
+      } else return callBackFuntionError();
     })
     .catch(() => {
       console.log('biometrics failed');
     });
+  return authBiometric;
 };
 
 export default BiometricAuthComponent;
