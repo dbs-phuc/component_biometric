@@ -1,12 +1,18 @@
+import { NativeModules } from 'react-native';
 import ReactNativeBiometrics from 'react-native-biometrics';
 
-export declare const BiometryTypes1: {
+const Component = NativeModules.Component;
+export declare const componentBiometryTypes: {
   TouchID: string;
   FaceID: string;
   Biometrics: string;
 };
 
-const BiometricAuthComponent = async (): Promise<any> => {
+export function runComponentSetting() {
+  Component.multiply();
+}
+
+const biometricAuthComponent = async (): Promise<any> => {
   const rnBiometrics = new ReactNativeBiometrics({
     allowDeviceCredentials: false,
   });
@@ -24,6 +30,7 @@ export const authenticate = (
   fallBackText: string,
   callBackFuntionSuccess: any,
   callBackFuntionError: any,
+  callBackFuntionFailed: any,
   allowDeviceCredentialsPin?: boolean
 ): Promise<any> => {
   const rnBiometrics = new ReactNativeBiometrics({
@@ -42,9 +49,9 @@ export const authenticate = (
       } else return callBackFuntionError();
     })
     .catch(() => {
-      console.log('biometrics failed');
+      return callBackFuntionFailed();
     });
   return authBiometric;
 };
 
-export default BiometricAuthComponent;
+export default biometricAuthComponent;
