@@ -2,7 +2,15 @@
 class Component: NSObject {
 
   @objc(multiply:withB:withResolver:withRejecter:)
-  func multiply(a: Float, b: Float, resolve:RCTPromiseResolveBlock,reject:RCTPromiseRejectBlock) -> Void {
-    resolve(a*b)
+  func multiply() -> Void {
+     guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
+
+    if UIApplication.shared.canOpenURL(settingsURL) {
+        if #available(iOS 10.0, *) {
+            UIApplication.shared.open(settingsURL, options: [:], completionHandler: nil)
+        } else {
+            UIApplication.shared.openURL(settingsURL)
+        }
+    }
   }
 }
