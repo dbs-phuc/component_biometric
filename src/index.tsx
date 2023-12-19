@@ -11,9 +11,8 @@ export interface CreateSignatureResult {
 const rnBiometrics = new ReactNativeBiometrics({
   allowDeviceCredentials: false,
 });
-let epochTimeSeconds = Math.round(new Date().getTime() / 1000).toString();
-let payload = epochTimeSeconds + 'some message';
-const settingBiometricComponent = NativeModules.SettingBiometric;
+
+const settingBiometricComponent = NativeModules.Component;
 
 export const asyncStoreKeys = async (keys: string) => {
   try {
@@ -75,10 +74,13 @@ export declare const componentBiometryTypes: {
 };
 
 export function getSupportSetingBiometric() {
-  settingBiometricComponent.getSupportSetingBiometric();
+  settingBiometricComponent.multiply();
 }
 
-const biometricAuthComponent = async (): Promise<any> => {
+export const biometricAuthComponent = async (
+  allowDeviceCredentials?: boolean
+): Promise<any> => {
+  rnBiometrics.allowDeviceCredentials = allowDeviceCredentials ?? false;
   const biometricType = rnBiometrics
     .isSensorAvailable()
     .then((resultObject) => {
@@ -90,21 +92,30 @@ const biometricAuthComponent = async (): Promise<any> => {
 export const authenticate = async (
   title: string,
   textButtonCancel: string,
-  fallBackText: string
+  fallBackText: string,
+  allowDeviceCredentials?: boolean
 ): Promise<any> => {
-  const authBiometric = await rnBiometrics.simplePrompt({
-    promptMessage: title,
-    fallbackPromptMessage: fallBackText,
-    cancelButtonText: textButtonCancel,
-  });
+  rnBiometrics.allowDeviceCredentials = allowDeviceCredentials ?? false;
+  const authBiometric = rnBiometrics
+    .simplePrompt({
+      promptMessage: title,
+      fallbackPromptMessage: fallBackText,
+      cancelButtonText: textButtonCancel,
+    })
+    .then((requesr) => {
+      console.log(requesr);
+    });
   return authBiometric;
 };
 
 export const authenticateCreateSignature = async (
   title: string,
   textButtonCancel: string,
-  fallBackText: string
+  fallBackText: string,
+  payload: string,
+  allowDeviceCredentials?: boolean
 ): Promise<CreateSignatureResult> => {
+  rnBiometrics.allowDeviceCredentials = allowDeviceCredentials ?? false;
   const authBiometric = await rnBiometrics.createSignature({
     promptMessage: title,
     payload: payload,
@@ -118,42 +129,25 @@ export const authenticateCreateSignature = async (
 export const authenCreateBiometric = async (
   title: string,
   textButtonCancel: string,
-  fallBackText: string
-): Promise<CreateSignatureResult> => {
-  const authSignatureResult: CreateSignatureResult = {
-    success: false,
-    signature: '',
-    error: undefined,
-  };
-
+  fallBackText: string,
+  allowDeviceCredentials?: boolean
+): Promise<any> => {
   try {
     const isAvailable = await rnBiometrics.isSensorAvailable();
     if (isAvailable.available) {
-      const existKeys = await onPressExistKeys();
-      if (existKeys) {
-        return await authenticateCreateSignature(
-          title,
-          textButtonCancel,
-          fallBackText
-        );
-      } else {
-        const createKeys = await createBiometricKeys();
-        if (createKeys) {
-          const authenBiometric = await authenticateCreateSignature(
-            title,
-            textButtonCancel,
-            fallBackText
-          );
-          return authenBiometric;
-        }
-      }
-    } else {
-      throw new Error(isAvailable.error);
-    }
+      const authenBiometric = await authenticate(
+        title,
+        textButtonCancel,
+        fallBackText,
+        allowDeviceCredentials
+      ).then((request) => {
+        console.log(request);
+      });
+      return authenBiometric;
+    } else throw isAvailable.error;
   } catch (error: any) {
     throw new Error(error);
   }
-  return authSignatureResult;
 };
 
-export default biometricAuthComponent;
+export default { biometricAuthComponent };
