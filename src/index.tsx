@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert, NativeModules } from 'react-native';
 import ReactNativeBiometrics from 'react-native-biometrics';
+import type { GetIdStepDTO, LoginDTO } from './common/dto/login.dto';
+import { Login, getIdStep } from './api/login.service';
 
 export interface CreateSignatureResult {
   success: boolean;
@@ -96,22 +98,18 @@ export const authenticate = async (
   allowDeviceCredentials?: boolean
 ): Promise<any> => {
   rnBiometrics.allowDeviceCredentials = allowDeviceCredentials ?? false;
-  const authBiometric = rnBiometrics
-    .simplePrompt({
-      promptMessage: title,
-      fallbackPromptMessage: fallBackText,
-      cancelButtonText: textButtonCancel,
-    })
-    .then((requesr) => {
-      console.log(requesr);
-    });
+  const authBiometric = await rnBiometrics.simplePrompt({
+    promptMessage: title,
+    fallbackPromptMessage: fallBackText,
+    cancelButtonText: textButtonCancel,
+  });
+
   return authBiometric;
 };
 
 export const authenticateCreateSignature = async (
   title: string,
   textButtonCancel: string,
-  fallBackText: string,
   payload: string,
   allowDeviceCredentials?: boolean
 ): Promise<CreateSignatureResult> => {
@@ -119,7 +117,6 @@ export const authenticateCreateSignature = async (
   const authBiometric = await rnBiometrics.createSignature({
     promptMessage: title,
     payload: payload,
-    fallbackPromptMessage: fallBackText,
     cancelButtonText: textButtonCancel,
   });
 
@@ -150,4 +147,29 @@ export const authenCreateBiometric = async (
   }
 };
 
-export default { biometricAuthComponent };
+export class LoginModule {
+  allowDeviceCredentials?: boolean;
+
+  constructor(rnBiometricsOptions?: boolean) {
+    this.allowDeviceCredentials = rnBiometricsOptions ?? false;
+  }
+
+  login(logingDto: LoginDTO): Promise<any> {
+    try {
+      const response = Login(logingDto);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+  getiDStep(stepFunctionId: GetIdStepDTO, headers: Headers): Promise<any> {
+    try {
+      const response = getIdStep(stepFunctionId, headers);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+}
+
+export default biometricAuthComponent;
