@@ -1,0 +1,9 @@
+export const ASYNC_STORAGE = {
+  MY_BIOMETRIC: 'MY_MIOMETRIC_',
+  API_URL: 'API_URL',
+  STATUS_LOGIN: 'STATUS_LOGIN',
+};
+
+export const ERROR_KEY = {
+  FAILED_KEY: 'CREATE_KEY_FAILED',
+};

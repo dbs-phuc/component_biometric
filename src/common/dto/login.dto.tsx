@@ -1,4 +1,4 @@
-export class LoginDTO {
+export class LoginLiveDTO {
   userName?: string;
   password?: string;
   module?: string = 'LIVE';

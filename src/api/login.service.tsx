@@ -1,8 +1,11 @@
-import { GetIdStepDTO, LoginDTO } from '../common/dto/login.dto';
-import { environment } from '../environments/environment.dev';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const Login = async (loginDto: LoginDTO) => {
-  const response = await fetch(environment.ApiUrl + '/Prod/auth/login', {
+const urlApi = async () => {
+  return await AsyncStorage.getItem('URL_API');
+};
+
+export const loginService = async (loginDto: any) => {
+  const response = await fetch(urlApi + '/Prod/auth/login', {
     method: 'POST',
     body: JSON.stringify(loginDto),
     headers: {
@@ -11,20 +14,4 @@ export const Login = async (loginDto: LoginDTO) => {
   });
   const resJson = await response.json();
   return resJson;
-};
-
-export const getIdStep = async (
-  getIdStepDTO: GetIdStepDTO,
-  headers: Headers
-) => {
-  const response = await fetch(
-    environment.ApiUrl + '/Prod/dai-public/get-id-step-function-by-daicd',
-    {
-      method: 'POST',
-      body: JSON.stringify(getIdStepDTO),
-      headers: headers,
-    }
-  );
-  const resJson = await response.json();
-  return resJson.stepFunctionId;
 };
