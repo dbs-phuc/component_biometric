@@ -1,7 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ASYNC_STORAGE } from '../common/common';
 
 const urlApi = async () => {
-  return await AsyncStorage.getItem('URL_API');
+  const request = await AsyncStorage.getItem(ASYNC_STORAGE.API_URL);
+  return request;
 };
 
 export const loginService = async (loginDto: any) => {

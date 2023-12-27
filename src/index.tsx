@@ -8,12 +8,6 @@ const CREATE_KEY = {
   FAILED_KEY: 'CREATE_KEY_FAILED',
 };
 
-// export declare const BiometryTypes: {
-//   TouchID: string;
-//   FaceID: string;
-//   Biometrics: string;
-// };
-
 const rnBiometrics = new ReactNativeBiometrics({
   allowDeviceCredentials: false,
 });
@@ -82,7 +76,7 @@ export const authenBiometricServer = async (
 };
 
 export const setConfig = async (urlApi: string) => {
-  AsyncStorage.setItem('URL_API', urlApi);
+  AsyncStorage.setItem(ASYNC_STORAGE.API_URL, urlApi);
 };
 export const checkConfig = async () => {
   const value = await AsyncStorage.getItem('URL_API');
@@ -136,7 +130,7 @@ export const loginAccountUres = async (loginDto: any): Promise<any> => {
         await AsyncStorage.setItem('PROFILE_LOGIN', JSON.stringify(loginDto));
         return response;
       } else {
-        throw new Error(response.code);
+        throw response.code;
       }
     }
   } catch (error: any) {
@@ -167,7 +161,7 @@ export const setupHandleBiometricsServer = async (
           throw signBiometric.error;
         }
       } else {
-        throw 'CREATE_PUBLIC_RIVATE_FAILED';
+        throw 'CREATE_PUBLIC_PRIVATE_FAILED';
       }
     }
   } catch (error: any) {
