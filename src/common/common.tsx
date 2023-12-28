@@ -8,7 +8,3 @@ export const ASYNC_STORAGE = {
 export const ERROR_KEY = {
   FAILED_KEY: 'CREATE_KEY_FAILED',
 };
-
-export const CREATE_KEY = {
-  FAILED_KEY: 'CREATE_KEY_FAILED',
-};

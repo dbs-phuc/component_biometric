@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules } from 'react-native';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import { loginService } from './api/login.service';
-import { ASYNC_STORAGE, CREATE_KEY } from './common/common';
+import { ASYNC_STORAGE, ERROR_KEY } from './common/common';
 import type {
   AuthenServerDTO,
   AuthenServerResult,
@@ -19,7 +19,7 @@ export const createKeysPublicPrivate = async (): Promise<any> => {
     const result = await rnBiometrics.createKeys();
     return result;
   } catch (error) {
-    throw CREATE_KEY.FAILED_KEY;
+    throw ERROR_KEY.FAILED_KEY;
   }
 };
 
@@ -39,25 +39,27 @@ export function getSupportSetingBiometric() {
   settingBiometricComponent.multiply();
 }
 
-export const isCheckAvailablrBiometrics =
-  async (): Promise<IsAvailableBiometrics> => {
-    try {
-      const availableBiometrics: IsAvailableBiometrics = {
-        available: false,
-      };
-      const isTypeBiometrics = await rnBiometrics.isSensorAvailable();
-      if (isTypeBiometrics.available) {
-        availableBiometrics.available = isTypeBiometrics.available;
-        availableBiometrics.biometryType = isTypeBiometrics.biometryType;
-        return availableBiometrics;
-      } else {
-        throw isTypeBiometrics.error;
-      }
-    } catch (error: any) {
-      console.log('mesages checkAvasssssilable:', error);
-      throw error;
+export const isCheckAvailablrBiometrics = async (
+  isAvailablePassword?: boolean
+): Promise<IsAvailableBiometrics> => {
+  try {
+    rnBiometrics.allowDeviceCredentials = isAvailablePassword || false;
+    const availableBiometrics: IsAvailableBiometrics = {
+      available: false,
+    };
+    const isTypeBiometrics = await rnBiometrics.isSensorAvailable();
+    if (isTypeBiometrics.available) {
+      availableBiometrics.available = isTypeBiometrics.available;
+      availableBiometrics.biometryType = isTypeBiometrics.biometryType;
+      return availableBiometrics;
+    } else {
+      throw isTypeBiometrics.error;
     }
-  };
+  } catch (error: any) {
+    console.log('mesages checkAvasssssilable:', error);
+    throw error;
+  }
+};
 
 export const authenBiometricLocal = async (
   authenLoaclOption: any,
@@ -69,9 +71,11 @@ export const authenBiometricLocal = async (
 };
 
 export const authenBiometricServer = async (
-  authenServerOptionsDto: AuthenServerDTO
+  authenServerOptionsDto: AuthenServerDTO,
+  isAvailablePassword?: boolean
 ): Promise<any> => {
   try {
+    rnBiometrics.allowDeviceCredentials = isAvailablePassword || false;
     const authBiometric = await rnBiometrics.createSignature(
       authenServerOptionsDto
     );
@@ -93,7 +97,8 @@ export const checkConfig = async () => {
 };
 
 export const handleSignBiometricsServer = async (
-  authenBiometricsServer: AuthenServerDTO
+  authenBiometricsServer: AuthenServerDTO,
+  isAvailablePassword?: boolean
 ): Promise<AuthenServerResult> => {
   try {
     const serverResult: AuthenServerResult = {
@@ -105,10 +110,11 @@ export const handleSignBiometricsServer = async (
     const statusLogin = JSON.parse(repsoneLogin);
     //check status login sau nayf dungf api
     if (statusLogin === 1) {
-      const repsone = await isCheckAvailablrBiometrics();
+      const repsone = await isCheckAvailablrBiometrics(isAvailablePassword);
       if (repsone.available === true) {
         const authBiometric = await authenBiometricServer(
-          authenBiometricsServer
+          authenBiometricsServer,
+          isAvailablePassword
         );
         if (authBiometric.success) {
           return authBiometric;
@@ -151,7 +157,7 @@ export const logout = async () => {
 };
 
 export const setupHandleBiometricsServer = async (
-  authenBiometricServerOptionsDto: any
+  authenBiometricServerOptionsDto: AuthenServerDTO
 ): Promise<any> => {
   try {
     const isAvailable = await isCheckAvailablrBiometrics();
