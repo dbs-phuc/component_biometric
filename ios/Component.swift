@@ -1,7 +1,7 @@
 @objc(Component)
 class Component: NSObject {
 
-  @objc(multiply:withB:withResolver:withRejecter:)
+  @objc(multiply)
   func multiply() -> Void {
      guard let settingsURL = URL(string: UIApplication.openSettingsURLString) else { return }
 

@@ -7,7 +7,6 @@ export interface PublicKey {
 export interface IsAvailableBiometrics {
   available: boolean;
   biometryType?: BiometryType;
-  error?: string;
 }
 
 export interface AuthenLocalDTO {

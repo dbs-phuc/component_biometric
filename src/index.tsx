@@ -2,24 +2,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules } from 'react-native';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import { loginService } from './api/login.service';
-import { ASYNC_STORAGE } from './common/common';
+import { ASYNC_STORAGE, CREATE_KEY } from './common/common';
+import type {
+  AuthenServerDTO,
+  AuthenServerResult,
+  IsAvailableBiometrics,
+} from './common/interface';
 
-const CREATE_KEY = {
-  FAILED_KEY: 'CREATE_KEY_FAILED',
-};
-
+const settingBiometricComponent = NativeModules.Component;
 const rnBiometrics = new ReactNativeBiometrics({
   allowDeviceCredentials: false,
 });
-
-const settingBiometricComponent = NativeModules.Component;
 
 export const createKeysPublicPrivate = async (): Promise<any> => {
   try {
     const result = await rnBiometrics.createKeys();
     return result;
   } catch (error) {
-    throw Error(CREATE_KEY.FAILED_KEY);
+    throw CREATE_KEY.FAILED_KEY;
   }
 };
 
@@ -39,19 +39,25 @@ export function getSupportSetingBiometric() {
   settingBiometricComponent.multiply();
 }
 
-export const isCheckAvailablrBiometrics = async (): Promise<any> => {
-  try {
-    const isTypeBiometrics = await rnBiometrics.isSensorAvailable();
-    if (isTypeBiometrics.available) {
-      return isTypeBiometrics;
-    } else {
-      throw isTypeBiometrics.error;
+export const isCheckAvailablrBiometrics =
+  async (): Promise<IsAvailableBiometrics> => {
+    try {
+      const availableBiometrics: IsAvailableBiometrics = {
+        available: false,
+      };
+      const isTypeBiometrics = await rnBiometrics.isSensorAvailable();
+      if (isTypeBiometrics.available) {
+        availableBiometrics.available = isTypeBiometrics.available;
+        availableBiometrics.biometryType = isTypeBiometrics.biometryType;
+        return availableBiometrics;
+      } else {
+        throw isTypeBiometrics.error;
+      }
+    } catch (error: any) {
+      console.log('mesages checkAvasssssilable:', error);
+      throw error;
     }
-  } catch (error: any) {
-    console.log('mesages checkAvasssssilable:', error);
-    throw error;
-  }
-};
+  };
 
 export const authenBiometricLocal = async (
   authenLoaclOption: any,
@@ -63,7 +69,7 @@ export const authenBiometricLocal = async (
 };
 
 export const authenBiometricServer = async (
-  authenServerOptionsDto: any
+  authenServerOptionsDto: AuthenServerDTO
 ): Promise<any> => {
   try {
     const authBiometric = await rnBiometrics.createSignature(
@@ -87,9 +93,12 @@ export const checkConfig = async () => {
 };
 
 export const handleSignBiometricsServer = async (
-  authenBiometricsServer: any
-): Promise<any> => {
+  authenBiometricsServer: AuthenServerDTO
+): Promise<AuthenServerResult> => {
   try {
+    const serverResult: AuthenServerResult = {
+      success: false,
+    };
     const repsoneLogin: any = await AsyncStorage.getItem(
       ASYNC_STORAGE.STATUS_LOGIN
     );
@@ -104,12 +113,11 @@ export const handleSignBiometricsServer = async (
         if (authBiometric.success) {
           return authBiometric;
         } else {
-          throw Error(authBiometric.error);
+          throw authBiometric.error;
         }
-      } else {
-        throw Error(repsone.error);
       }
     }
+    return serverResult;
   } catch (error: any) {
     throw error;
   }
