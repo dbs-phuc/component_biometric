@@ -7,7 +7,7 @@ const urlApi = async () => {
 };
 
 export const loginService = async (loginDto: any) => {
-  const response = await fetch(urlApi + '/Prod/auth/login', {
+  const response = await fetch((await urlApi()) + '/Prod/auth/login', {
     method: 'POST',
     body: JSON.stringify(loginDto),
     headers: {

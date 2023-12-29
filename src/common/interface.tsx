@@ -27,6 +27,6 @@ export interface AuthenServerResult {
   error?: string;
 }
 
-export interface IConfig {
+export interface ConfigDTO {
   apiUrl: string;
 }

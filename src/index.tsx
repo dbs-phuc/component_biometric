@@ -2,10 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules } from 'react-native';
 import ReactNativeBiometrics from 'react-native-biometrics';
 import { loginService } from './api/login.service';
-import { ASYNC_STORAGE, ERROR_KEY } from './common/common';
+import {
+  ASYNC_STORAGE,
+  BIOMETRIC_SIGNATURE_FAILED,
+  ERROR_KEY,
+} from './common/common';
 import type {
+  AuthenLocalDTO,
   AuthenServerDTO,
   AuthenServerResult,
+  ConfigDTO,
   IsAvailableBiometrics,
 } from './common/interface';
 
@@ -14,12 +20,12 @@ const rnBiometrics = new ReactNativeBiometrics({
   allowDeviceCredentials: false,
 });
 
-export const createKeysPublicPrivate = async (): Promise<any> => {
+export const createKeysPublicPrivate = async (): Promise<string> => {
   try {
     const result = await rnBiometrics.createKeys();
-    return result;
+    return result.publicKey;
   } catch (error) {
-    throw ERROR_KEY.FAILED_KEY;
+    throw BIOMETRIC_SIGNATURE_FAILED.CREATE_KEY_ERROR;
   }
 };
 
@@ -30,9 +36,13 @@ export const onPressDeleteKeys = async (): Promise<boolean> => {
 };
 
 export const onPressExistKeys = async (): Promise<boolean> => {
-  const resultObject = await rnBiometrics.biometricKeysExist();
-  const { keysExist } = resultObject;
-  return keysExist;
+  try {
+    const resultObject = await rnBiometrics.biometricKeysExist();
+    const { keysExist } = resultObject;
+    return keysExist;
+  } catch (error) {
+    throw BIOMETRIC_SIGNATURE_FAILED.EXIST_KEY_ERROR;
+  }
 };
 
 export function getSupportSetingBiometric() {
@@ -56,44 +66,58 @@ export const isCheckAvailablrBiometrics = async (
       throw isTypeBiometrics.error;
     }
   } catch (error: any) {
-    console.log('mesages checkAvasssssilable:', error);
     throw error;
   }
 };
 
 export const authenBiometricLocal = async (
-  authenLoaclOption: any,
+  authenLoaclOption: AuthenLocalDTO,
   allowDeviceCredentials?: boolean
 ): Promise<any> => {
-  rnBiometrics.allowDeviceCredentials = allowDeviceCredentials ?? false;
-  const authBiometric = await rnBiometrics.simplePrompt(authenLoaclOption);
-  return authBiometric;
+  try {
+    rnBiometrics.allowDeviceCredentials = allowDeviceCredentials ?? false;
+    const authBiometric = await rnBiometrics.simplePrompt(authenLoaclOption);
+    return authBiometric;
+  } catch (error) {
+    throw BIOMETRIC_SIGNATURE_FAILED.DISPLAYING_ERROR;
+  }
 };
 
 export const authenBiometricServer = async (
   authenServerOptionsDto: AuthenServerDTO,
   isAvailablePassword?: boolean
-): Promise<any> => {
+): Promise<AuthenServerResult> => {
   try {
     rnBiometrics.allowDeviceCredentials = isAvailablePassword || false;
     const authBiometric = await rnBiometrics.createSignature(
       authenServerOptionsDto
     );
-    return authBiometric;
+    if (authBiometric.success) {
+      return authBiometric;
+    } else {
+      throw ERROR_KEY.SIGNATURE_FAILED;
+    }
   } catch (error) {
-    throw error;
+    if (error === ERROR_KEY.SIGNATURE_FAILED) {
+      throw error;
+    } else {
+      throw ERROR_KEY.KEY_ERROR;
+    }
   }
 };
 
-export const setConfig = async (urlApi: string) => {
-  AsyncStorage.setItem(ASYNC_STORAGE.API_URL, urlApi);
+export const setConfig = async (configDto: ConfigDTO) => {
+  AsyncStorage.setItem(ASYNC_STORAGE.API_URL, configDto.apiUrl);
 };
-export const checkConfig = async () => {
-  const value = await AsyncStorage.getItem('URL_API');
-  if (value != null) {
-    return true;
+export const checkConfig = async (): Promise<boolean> => {
+  try {
+    const value = await AsyncStorage.getItem(ASYNC_STORAGE.API_URL);
+    if (value != null) {
+      return true;
+    } else throw null;
+  } catch (error) {
+    throw error;
   }
-  return false;
 };
 
 export const handleSignBiometricsServer = async (
@@ -116,11 +140,7 @@ export const handleSignBiometricsServer = async (
           authenBiometricsServer,
           isAvailablePassword
         );
-        if (authBiometric.success) {
-          return authBiometric;
-        } else {
-          throw authBiometric.error;
-        }
+        return authBiometric;
       }
     }
     return serverResult;
@@ -148,7 +168,6 @@ export const loginAccountUres = async (loginDto: any): Promise<any> => {
       }
     }
   } catch (error: any) {
-    console.error('Login error:', error.message);
     return error;
   }
 };
@@ -162,21 +181,19 @@ export const setupHandleBiometricsServer = async (
   try {
     const isAvailable = await isCheckAvailablrBiometrics();
     if (isAvailable.available) {
-      const createKey = await createKeysPublicPrivate();
-      if (createKey.publicKey) {
-        //save publickey server
-        const signBiometric = await rnBiometrics.createSignature(
-          authenBiometricServerOptionsDto
-        );
-        if (signBiometric.success) {
-          return signBiometric;
-          //save signBiometric.signature
-        } else {
-          throw signBiometric.error;
-        }
+      await createKeysPublicPrivate();
+      //save publickey server
+      const signBiometric = await rnBiometrics.createSignature(
+        authenBiometricServerOptionsDto
+      );
+      if (signBiometric.success) {
+        return signBiometric;
+        //save signBiometric.signature
       } else {
-        throw 'CREATE_PUBLIC_PRIVATE_FAILED';
+        throw signBiometric.error;
       }
+    } else {
+      throw 'CREATE_PUBLIC_PRIVATE_FAILED';
     }
   } catch (error: any) {
     throw error;
